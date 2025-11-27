@@ -1,0 +1,13 @@
+# editor
+.vscode/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Sensitive file
+/config.py
+
+# else
+/target.txt

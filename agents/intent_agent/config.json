@@ -1,0 +1,29 @@
+{
+  "//":"agents/intent_agent/config.json",
+  "model": "gpt-5-nano",
+  "top_p": 1,
+  "presence_penalty": 0,
+  "frequency_penalty": 0,
+  "response_format": {
+    "type": "json_schema",
+    "json_schema": {
+      "name": "classification_result",
+      "strict": true,
+      "schema": {
+        "type": "object",
+        "properties": {
+          "genre_type": {
+            "type": "string",
+            "enum": ["Narrative", "Informational", "Expository", "Argumentative", "Instructional", "Normative", "Expressive", "Other"]
+          },
+          "context_type": {
+            "type": "string",
+            "enum": ["Other"]
+          }
+        },
+        "required": ["genre_type", "context_type"],
+        "additionalProperties": false
+      }
+    }
+  }
+}
