@@ -1,6 +1,7 @@
 # Multi-Agent System Framework
 本專案開發過程中使用 Claude (Anthropic) 作為技術諮詢和部分程式碼審查工具!!
-基於 LangGraph 的多代理系統框架,提供可重用的基礎架構以提供快速開發新的 agent。
+
+此專案是基於 LangGraph 的多代理系統框架,提供可重用的基礎架構以提供快速開發新的 agent。
 ## 專案結構與功能說明
 
 ### 核心模組
