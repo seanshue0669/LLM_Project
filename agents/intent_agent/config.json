@@ -12,16 +12,12 @@
       "schema": {
         "type": "object",
         "properties": {
-          "genre_type": {
+          "task_type": {
             "type": "string",
-            "enum": ["Narrative", "Informational", "Expository", "Argumentative", "Instructional", "Normative", "Expressive", "Other"]
-          },
-          "context_type": {
-            "type": "string",
-            "enum": ["Other"]
+            "enum": [ "KEYPOINT", "SYNTHESIS" ]
           }
         },
-        "required": ["genre_type", "context_type"],
+        "required": [ "task_type" ],
         "additionalProperties": false
       }
     }
