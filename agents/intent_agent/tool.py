@@ -110,7 +110,6 @@ class IntentAgentTool(BaseTool):
             "   - Never output an empty string.\n"
             "   - Never output any explanation, commentary, or additional text outside the JSON.\n"
             "\n"
-            "Return ONLY the JSON object, with the \"task_type\" field set to either \"KEYPOINT\" or \"SYNTHESIS\".\n"
         )
 
         user_prompt = (
