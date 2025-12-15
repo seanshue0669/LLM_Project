@@ -3,7 +3,7 @@ from agents.mycore.base_graph import BaseGraph
 from agents.mycore.LLMclient import LLMClient
 
 from agents.keypoint_agents.schema import KeypointAgentSchema
-#from agents.keypoint_agents.tool import KeypointAgentTool
+from agents.keypoint_agents.tool import KeypointAgentTool
 
 
 class KeypointAgent(BaseGraph):
@@ -23,7 +23,7 @@ class KeypointAgent(BaseGraph):
         self.state_mapping = KeypointAgentSchema.state_mapping
         
         # --- load tools ---
-        #self.tools = KeypointAgentTool(llm_client)
+        self.tools = KeypointAgentTool(llm_client)
     
     def extract_keypoints(self, state: dict) -> dict:
         """Extract keypoints from input text."""
