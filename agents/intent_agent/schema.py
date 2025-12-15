@@ -7,8 +7,7 @@ from agents.mycore.base_schema import BaseSchema
 # ========================================================
 class IntentAgentState(TypedDict):
     input_text            : str
-    context_type_candidate: str
-    genre_type_candidate  : str
+    task_type_candidate: str
 
 # ========================================================
 # Node definition
@@ -36,8 +35,7 @@ class IntentAgentSchema(BaseSchema):
                 "input_text": "input_text"
             },
             "output": {
-                "genre_type_candidate": "selected_genre_type",
-                "context_type_candidate": "selected_context_type"
+                "task_type_candidate": "selected_task_type"
             }
         }
     }

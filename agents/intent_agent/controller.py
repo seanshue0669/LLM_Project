@@ -28,8 +28,7 @@ class IntentAgent(BaseGraph):
     def check_input_intent(self, state: dict) -> dict:
         """Placeholder node for invoking subgraph at runtime.(Implement in controller)"""
         result = self.tools.classify(state.get("input_text"))
-        state["genre_type_candidate"]   = result["genre_type"]
-        state["context_type_candidate"] = result["context_type"]
+        state["task_type_candidate"] = result["task_type"]
         return state
     def compile(self):
         """Compile the IntentAgent graph using BaseGraph logic."""

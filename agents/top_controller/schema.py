@@ -7,8 +7,7 @@ from agents.mycore.base_schema import BaseSchema
 # ========================================================
 class TopControllerState(TypedDict):
     input_text           : str
-    selected_context_type: str
-    selected_genre_type  : str
+    selected_task_type: str
 
 # ========================================================
 # Node definition

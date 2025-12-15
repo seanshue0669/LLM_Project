@@ -20,8 +20,7 @@ class UnifyAPI:
         try:
             state = {
                 "input_text"           : input_text,
-                "selected_context_type": "",
-                "selected_genre_type"  : "",
+                "selected_task_type"   : "",
             }
             
             result = self.runnable.invoke(state)
