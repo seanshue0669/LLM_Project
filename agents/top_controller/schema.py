@@ -8,6 +8,7 @@ from agents.mycore.common import END
 class TopControllerState(TypedDict):
     input_text           : str
     selected_task_type   : str
+    final_result_text    : str # Final processed result from keypoint or synthesis agent
 
 # ========================================================
 # Node definition
