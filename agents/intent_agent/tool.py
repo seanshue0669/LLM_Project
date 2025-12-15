@@ -26,7 +26,7 @@ class IntentAgentTool(BaseTool):
             "more appropriate:\n"
             "- KEYPOINT: the user mainly wants compressed information.\n"
             "- SYNTHESIS: the user mainly wants help understanding and thinking.\n"
-            "\n"
+            "\n" 
             "You MUST always output a single JSON object using ONLY double quotes, with the following structure:\n"
             "{\"task_type\": \"<type>\"}\n"
             "\n"
@@ -125,6 +125,6 @@ class IntentAgentTool(BaseTool):
         except Exception:
             result = {"task_type": "KEYPOINT"}
 
-        task = result.get("task_type", "KEYPOINT")
-
-        return {"task_type": task}
+        # Removed: result.get("task_type", "KEYPOINT")
+        # Reason: Return type is dictionary, no need to extract and re-wrap the value
+        return result
