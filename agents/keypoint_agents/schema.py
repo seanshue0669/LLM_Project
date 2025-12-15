@@ -1,6 +1,7 @@
 # agents/keypoint_agents/schema.py
 from typing import TypedDict
 from agents.mycore.base_schema import BaseSchema
+from agents.mycore.common import END
 
 # ========================================================
 # State definition
@@ -39,4 +40,6 @@ class KeypointAgentSchema(BaseSchema):
     
     conditional_edges = []
     
-    direct_edges = []
+    direct_edges = [
+        ("extract_keypoints", END)
+    ]
