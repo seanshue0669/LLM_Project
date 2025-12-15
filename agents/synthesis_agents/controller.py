@@ -1,35 +1,36 @@
-# agents/intent_agent/controller.py
+# agents/synthesis_agents/controller.py
 from agents.mycore.base_graph import BaseGraph
 from agents.mycore.LLMclient import LLMClient
 
-from agents.intent_agent.schema import IntentAgentSchema
-from agents.intent_agent.tool import IntentAgentTool
+from agents.synthesis_agents.schema import SynthesisAgentSchema
+from agents.synthesis_agents.tool import SynthesisAgentTool
 
 
-class IntentAgent(BaseGraph):
-    """Top-level orchestrator graph that coordinates subgraphs."""
+class SynthesisAgent(BaseGraph):
+    """Agent for synthesizing and analyzing content."""
 
     def __init__(self, llm_client: LLMClient):
-        super().__init__(IntentAgentSchema.state_type)
+        super().__init__(SynthesisAgentSchema.state_type)
 
         # --- import schema definitions ---
-        self.nodes              = IntentAgentSchema.nodes
-        self.conditional_edges  = IntentAgentSchema.conditional_edges
-        self.direct_edges       = IntentAgentSchema.direct_edges
+        self.nodes = SynthesisAgentSchema.nodes
+        self.conditional_edges = SynthesisAgentSchema.conditional_edges
+        self.direct_edges = SynthesisAgentSchema.direct_edges
 
         # --- load dependent graphs ---
-        DEPENDENT_GRAPHS={}
-        self.subgraphs          = {k: v() for k, v in DEPENDENT_GRAPHS.items()}
-        self.state_mapping      = IntentAgentSchema.state_mapping
+        DEPENDENT_GRAPHS = {}
+        self.subgraphs = {k: v() for k, v in DEPENDENT_GRAPHS.items()}
+        self.state_mapping = SynthesisAgentSchema.state_mapping
         
-        # --- load dependent graphs ---
-        self.tools              = IntentAgentTool(llm_client)
+        # --- load tools ---
+        self.tools = SynthesisAgentTool(llm_client)
     
-    def check_input_intent(self, state: dict) -> dict:
-        """Placeholder node for invoking subgraph at runtime.(Implement in controller)"""
-        result = self.tools.classify(state.get("input_text"))
-        state["task_type_candidate"] = result["task_type"]
+    def synthesize_content(self, state: dict) -> dict:
+        """Synthesize and analyze content from input text."""
+        result = self.tools.synthesize(state.get("input_text"))
+        state["synthesis_result"] = result
         return state
+    
     def compile(self):
-        """Compile the IntentAgent graph using BaseGraph logic."""
+        """Compile the SynthesisAgent graph using BaseGraph logic."""
         return super().compile()
