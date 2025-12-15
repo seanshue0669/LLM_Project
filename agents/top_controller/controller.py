@@ -60,11 +60,11 @@ class TopController(BaseGraph):
         return parent_update
     def call_keypoint_agent(self, state: dict) -> dict:
         """Invoke keypoint agent graph with automatic state mapping."""
-        scenario = "call_keypoint_agent"
+        #scenario = "call_keypoint_agent"
         return state
     def call_synthesis_agent(self, state: dict) -> dict:
         """Invoke synthesis agent graph with automatic state mapping.""" 
-        scenario = "call_synthesis_agent"
+        #scenario = "call_synthesis_agent"
         return state
     def compile(self):
         """Compile the TopController graph using BaseGraph logic."""
