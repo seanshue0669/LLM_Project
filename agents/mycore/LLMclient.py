@@ -76,14 +76,18 @@ class LLMClient:
                 top_p                   =config.get("top_p", 1),
                 presence_penalty        =config.get("presence_penalty", 0),
                 frequency_penalty       =config.get("frequency_penalty", 0),
-                max_completion_tokens   =config.get("max_tokens",500),
+                max_completion_tokens   =config.get("max_completion_tokens",500),
                 response_format         =config.get("response_format"),
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
             )
-
+            
+            finish_reason = response.choices[0].finish_reason
+            if finish_reason != "stop":
+                raise Exception(f"LLM response incomplete: {finish_reason}")
+            
             return {
                 "content": response.choices[0].message.content,
                 "tokens_in": response.usage.prompt_tokens,
