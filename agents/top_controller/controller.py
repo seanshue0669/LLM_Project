@@ -6,8 +6,10 @@ from .schema import TopControllerSchema
 
 # dependent controller
 from agents.intent_agent.controller import IntentAgent
+from agents.keypoint_agents.controller import KeypointAgent
 # dependent schema
 from agents.intent_agent.schema import IntentAgentSchema
+from agents.keypoint_agents.schema import KeypointAgentSchema
 
 class TopController(BaseGraph):
     """Top-level orchestrator graph that coordinates subgraphs."""
@@ -28,7 +30,11 @@ class TopController(BaseGraph):
             "intent_agent": {
                 "controller": IntentAgent,
                 "schema": IntentAgentSchema
-            }
+            },
+            "keypoint_agent": {
+                "controller": KeypointAgent,
+                "schema": KeypointAgentSchema
+            },
         }
 
         for k, v in DEPENDENT_GRAPHS_AND_SCHEMA.items():
@@ -60,8 +66,21 @@ class TopController(BaseGraph):
         return parent_update
     def call_keypoint_agent(self, state: dict) -> dict:
         """Invoke keypoint agent graph with automatic state mapping."""
-        #scenario = "call_keypoint_agent"
-        return state
+        scenario = "extract_keypoints"
+
+        graphmapping = self.subgraph_mappings["keypoint_agent"]
+        mapping = graphmapping.get(scenario)
+
+        if not mapping:
+            raise ValueError(f"Scenario '{scenario}' not found in keypoint_agent state_mapping")
+
+        subgraph_input = self._map_input_state(state, mapping["input"])
+        
+        result_state = self.subgraphs["keypoint_agent"].invoke(subgraph_input)
+
+        parent_update = self._map_output_state(result_state, mapping["output"])
+        
+        return parent_update
     def call_synthesis_agent(self, state: dict) -> dict:
         """Invoke synthesis agent graph with automatic state mapping.""" 
         #scenario = "call_synthesis_agent"
