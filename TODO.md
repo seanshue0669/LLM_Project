@@ -4,7 +4,7 @@
 - [x] Schema 定義
 - [x] Graph_init 框架
 - [x] call_intent_agent 實作
-- [ ] call_keypoint_agent 實作
+- [x] call_keypoint_agent 實作
 - [ ] call_synthesis_agent 實作
 - [ ] 端對端測試
 
@@ -19,9 +19,9 @@
 - [x] Schema + state_mapping
 - [x] Graph_init
 - [x] Tool 框架
-- [ ] Prompt 設計與調整
-- [ ] 整合到 TopController
-- [ ] 測試
+- [x] Prompt 設計與調整
+- [x] 整合到 TopController
+- [x] 測試
 
 ## SynthesisAgent
 - [ ] Schema + state_mapping
@@ -66,10 +66,10 @@
   - [x] map input state
   - [x] invoke subgraph
   - [x] map output state
-- [ ] call_keypoint_agent 實作
-  - [ ] 載入 KeypointAgent 到 DEPENDENT_GRAPHS
-  - [ ] 實作狀態映射邏輯
-  - [ ] 測試調用
+- [x] call_keypoint_agent 實作
+  - [x] 載入 KeypointAgent 到 DEPENDENT_GRAPHS
+  - [x] 實作狀態映射邏輯
+  - [x] 測試調用
 - [ ] call_synthesis_agent 實作
   - [ ] 載入 SynthesisAgent 到 DEPENDENT_GRAPHS
   - [ ] 實作狀態映射邏輯
@@ -125,24 +125,24 @@
 #### 3. Tool 框架
 - [x] KeypointAgentTool class
 - [x] extract 方法簽名定義
-- [ ] config.json 基礎配置
+- [x] config.json 基礎配置
 
 #### 4. Prompt 設計與調整
-- [ ] 完善 system_prompt (關鍵點提取規則)
-- [ ] 設計 user_prompt 格式
-- [ ] 測試不同類型文本的提取效果
-- [ ] 根據測試結果調整 prompt
-- [ ] 確定輸出格式 (numbered list / JSON / etc.)
+- [x] 完善 system_prompt (關鍵點提取規則)
+- [x] 設計 user_prompt 格式
+- [x] 測試不同類型文本的提取效果
+- [x] 根據測試結果調整 prompt
+- [x] 確定輸出格式 (numbered list / JSON / etc.)
 
 #### 5. 整合到 TopController
-- [ ] 在 TopController 的 DEPENDENT_GRAPHS 加入 KeypointAgent
-- [ ] 實作 call_keypoint_agent 的完整邏輯
-- [ ] 測試 TopController → KeypointAgent 的狀態映射
+- [x] 在 TopController 的 DEPENDENT_GRAPHS 加入 KeypointAgent
+- [x] 實作 call_keypoint_agent 的完整邏輯
+- [x] 測試 TopController → KeypointAgent 的狀態映射
 
 #### 6. 測試
-- [ ] 單元測試 (test_tool.py)
-- [ ] 整合測試 (透過 TopController 調用)
-- [ ] 邊界案例測試
+- [x] 單元測試 (test_tool.py)
+- [x] 整合測試 (透過 TopController 調用)
+- [x] 邊界案例測試
 
 ---
 
