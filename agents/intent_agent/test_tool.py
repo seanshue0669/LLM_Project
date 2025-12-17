@@ -1,9 +1,10 @@
 # agents/intent_agent/test_tool.py
 
 from agents.intent_agent.tool import IntentAgentTool
+from agents.mycore.test_utils import test_wrapper
 from __init__ import llm_client
 
-
+@test_wrapper
 def test_classify_narrative_text():
     """Test classify method with narrative text"""
     
