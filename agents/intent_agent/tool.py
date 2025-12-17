@@ -120,10 +120,7 @@ class IntentAgentTool(BaseTool):
         current_config = self._readjson(CONFIG_1_PATH)
         response = self.client.invoke(user_prompt, system_prompt, current_config) 
         
-        try:
-            result = json.loads(response["content"])
-        except Exception:
-            result = {"task_type": "KEYPOINT"}
+        result = json.loads(response["content"])
 
         # Removed: result.get("task_type", "KEYPOINT")
         # Reason: Return type is dictionary, no need to extract and re-wrap the value
