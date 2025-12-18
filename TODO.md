@@ -5,8 +5,8 @@
 - [x] Graph_init 框架
 - [x] call_intent_agent 實作
 - [x] call_keypoint_agent 實作
-- [ ] call_synthesis_agent 實作
-- [ ] 端對端測試
+- [x] call_synthesis_agent 實作
+- [x] 端對端測試
 
 ## IntentAgent
 - [x] Schema + state_mapping
@@ -24,12 +24,12 @@
 - [x] 測試
 
 ## SynthesisAgent
-- [ ] Schema + state_mapping
-- [ ] Graph_init
-- [ ] Tool 框架
-- [ ] Prompt 設計
-- [ ] 整合到 TopController
-- [ ] 測試
+- [x] Schema + state_mapping
+- [x] Graph_init
+- [x] Tool 框架
+- [x] Prompt 設計
+- [x] 整合到 TopController
+- [x] 測試
 
 ### LineBot Integration
 - [ ] LineBot API 設定
@@ -39,8 +39,8 @@
 - [ ] 部署測試
 
 ### System Integration Testing
-- [ ] 整合測試流程
-- [ ] 端對端測試案例
+- [x] 整合測試流程
+- [x] 端對端測試案例
 
 
 ## 📋 Detailed Task Breakdown
@@ -70,15 +70,15 @@
   - [x] 載入 KeypointAgent 到 DEPENDENT_GRAPHS
   - [x] 實作狀態映射邏輯
   - [x] 測試調用
-- [ ] call_synthesis_agent 實作
-  - [ ] 載入 SynthesisAgent 到 DEPENDENT_GRAPHS
-  - [ ] 實作狀態映射邏輯
-  - [ ] 測試調用
+- [x] call_synthesis_agent 實作
+  - [x] 載入 SynthesisAgent 到 DEPENDENT_GRAPHS
+  - [x] 實作狀態映射邏輯
+  - [x] 測試調用
 
 #### 4. Integration & Testing
-- [ ] 整體流程測試 (input → intent → keypoint/synthesis → output)
-- [ ] 錯誤處理驗證
-- [ ] 邊界案例測試
+- [x] 整體流程測試 (input → intent → keypoint/synthesis → output)
+- [x] 錯誤處理驗證
+- [x] 邊界案例測試
 
 ---
 
@@ -149,33 +149,33 @@
 ### SynthesisAgent
 
 #### 1. Schema + state_mapping
-- [ ] 定義 SynthesisAgentState
-- [ ] 定義 state_mapping
-- [ ] 定義 nodes
+- [x] 定義 SynthesisAgentState
+- [x] 定義 state_mapping
+- [x] 定義 nodes
 
 #### 2. Graph_init
-- [ ] 建立 controller.py
-- [ ] 載入 schema
-- [ ] 初始化 SynthesisAgentTool
+- [x] 建立 controller.py
+- [x] 載入 schema
+- [x] 初始化 SynthesisAgentTool
 
 #### 3. Tool 框架
-- [ ] 建立 tool.py
-- [ ] 定義主要方法簽名
-- [ ] 建立 config.json
+- [x] 建立 tool.py
+- [x] 定義主要方法簽名
+- [x] 建立 config.json
 
 #### 4. Prompt 設計
-- [ ] 設計 system_prompt
-- [ ] 設計 user_prompt 格式
-- [ ] 測試與調整
+- [x] 設計 system_prompt
+- [x] 設計 user_prompt 格式
+- [x] 測試與調整
 
 #### 5. 整合到 TopController
-- [ ] 在 DEPENDENT_GRAPHS 加入 SynthesisAgent
-- [ ] 實作 call_synthesis_agent
-- [ ] 測試狀態映射
+- [x] 在 DEPENDENT_GRAPHS 加入 SynthesisAgent
+- [x] 實作 call_synthesis_agent
+- [x] 測試狀態映射
 
 #### 6. 測試
-- [ ] 單元測試
-- [ ] 整合測試
-- [ ] 邊界案例測試
+- [x] 單元測試
+- [x] 整合測試
+- [x] 邊界案例測試
 
 ---
