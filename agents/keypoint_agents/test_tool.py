@@ -2,7 +2,7 @@
 
 from agents.keypoint_agents.tool import KeypointAgentTool
 from __init__ import llm_client
-
+import json
 
 def test_extract_keypoints_short():
     """Test extract() with a short text."""
@@ -19,11 +19,11 @@ def test_extract_keypoints_short():
     print("=== [Short Test] Input ===")
     print(text)
     print("\n=== [Short Test] Result ===")
-    print(result)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
 
-    assert isinstance(result, str), "Result should be a string"
-    assert len(result.strip()) > 0, "Result is empty"
 
+    assert isinstance(result, dict), "Result should be a string"
+    assert "keypoints" in result and isinstance(result["keypoints"], list) and len(result["keypoints"]) > 0
     print("\nTest passed!")
 
 
@@ -49,11 +49,11 @@ def test_extract_keypoints_long():
     print("=== [Long Test] Input length ===")
     print(len(text))
     print("\n=== [Long Test] Result ===")
-    print(result)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
 
-    assert isinstance(result, str), "Result should be a string"
-    assert len(result.strip()) > 0, "Result is empty"
 
+    assert isinstance(result, dict), "Result should be a string"
+    assert "keypoints" in result and isinstance(result["keypoints"], list) and len(result["keypoints"]) > 0
     print("\nTest passed!")
 
 
