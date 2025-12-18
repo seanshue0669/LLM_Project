@@ -24,7 +24,7 @@ def call_keypoint_agent(state: TopControllerState) -> dict:
     return state
 def call_synthesis_agent(state: TopControllerState) -> dict:
     """Placeholder node for invoking subgraph at runtime.(Implement in controller)"""
-
+    return state
 # ========================================================
 # Edge definition
 # ========================================================
