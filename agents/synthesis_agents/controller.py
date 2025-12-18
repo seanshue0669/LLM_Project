@@ -1,4 +1,5 @@
 # agents/synthesis_agents/controller.py
+import json
 from agents.mycore.base_graph import BaseGraph
 from agents.mycore.LLMclient import LLMClient
 
@@ -26,10 +27,10 @@ class SynthesisAgent(BaseGraph):
         self.tools = SynthesisAgentTool(llm_client)
     
     def synthesize_content(self, state: dict) -> dict:
-        """Synthesize and analyze content from input text."""
         result = self.tools.synthesize(state.get("input_text"))
-        state["synthesis_result"] = result
-        return state
+        payload = json.dumps(result, ensure_ascii=False)
+        return {"synthesis_result": payload}
+
     
     def compile(self):
         """Compile the SynthesisAgent graph using BaseGraph logic."""
