@@ -26,10 +26,47 @@ class SynthesisAgent(BaseGraph):
         # --- load tools ---
         self.tools = SynthesisAgentTool(llm_client)
     
+    def identify_protagonist(self, state: dict) -> dict:
+        out = self.tools.get_protagonist(state.get("input_text"))
+        protagonist = (out.get("protagonist") or "Unknown").strip() or "Unknown"
+        return {"protagonist": protagonist}
+    
+    def infer_focus_aspects(self, state: dict) -> dict:
+        out = self.tools.get_focus_aspects(
+            state.get("input_text"),
+            state.get("protagonist", "Unknown")
+        )
+
+        focus_aspects = out.get("focus_aspects")
+        if not isinstance(focus_aspects, list) or len(focus_aspects) == 0:
+            focus_aspects = ["Unclear"]
+
+        # Ensure all elements are strings
+        focus_aspects = [str(x).strip() for x in focus_aspects if str(x).strip()]
+        if not focus_aspects:
+            focus_aspects = ["Unclear"]
+
+        return {"focus_aspects": focus_aspects}
+    
     def synthesize_content(self, state: dict) -> dict:
-        result = self.tools.synthesize(state.get("input_text"))
-        payload = json.dumps(result, ensure_ascii=False)
-        return {"synthesis_result": payload}
+        payload = self.tools.get_synthesis_payload(
+            state.get("input_text"),
+            state.get("protagonist", "Unknown"),
+            state.get("focus_aspects", ["Unclear"])
+        )
+
+        final_obj = {
+            "protagonist": state.get("protagonist", "Unknown"),
+            "focus_aspects": state.get("focus_aspects", ["Unclear"]),
+            "synthesis": payload.get("synthesis", "").strip() or "Unclear input.",
+            "added_context": payload.get("added_context", []) if isinstance(payload.get("added_context"), list) else [],
+            "examples": payload.get("examples", []) if isinstance(payload.get("examples"), list) else [],
+            "takeaways": payload.get("takeaways", []) if isinstance(payload.get("takeaways"), list) else []
+        }
+
+        synthesis_result_str = json.dumps(final_obj, ensure_ascii=False)
+
+        return {"synthesis_result": synthesis_result_str}
 
     
     def compile(self):

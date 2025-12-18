@@ -18,48 +18,141 @@ class KeypointAgentTool(BaseTool):
                 return json.load(f)
         except Exception as e:
             raise RuntimeError(f"Failed to read JSON file: {path}") from e
+            
+    def _with_schema(self, base_cfg: dict, schema: dict) -> dict:
+        cfg = dict(base_cfg)
+        cfg["response_format"] = {
+            "type": "json_schema",
+            "json_schema": {
+                "name": schema["name"],
+                "strict": True,
+                "schema": schema["schema"]
+            }
+        }
+        return cfg
+    
+    @auto_wrap_error
+    def get_protagonist(self, text: str) -> dict:
+        text = (text or "").strip()
+
+        system_prompt = (
+            "Identify the MAIN SUBJECT (protagonist) of the input.\n"
+            "Return ONLY one JSON object using double quotes.\n"
+            "No extra text.\n"
+        )
+        user_prompt = "Input:\n\n" + text
+
+        schema = {
+            "name": "protagonist_only",
+            "schema": {
+                "type": "object",
+                "properties": {"protagonist": {"type": "string", "minLength": 1, "maxLength": 120}},
+                "required": ["protagonist"],
+                "additionalProperties": False
+            }
+        }
+        base_cfg = self._readjson(CONFIG_PATH)
+        cfg = self._with_schema(base_cfg, schema)
+        raw = self.client.invoke(user_prompt, system_prompt, cfg)["content"].strip()
+        return json.loads(raw)
+        
+    @auto_wrap_error
+    def get_focus_aspects(self, text: str, protagonist: str) -> dict:
+        text = (text or "").strip()
+        protagonist = (protagonist or "").strip()
+    
+        system_prompt = (
+            "Infer 2–6 focus aspects that best capture what matters in the input.\n"
+            "The aspects are NOT a fixed taxonomy; infer topic-dependent aspects.\n"
+            "Return ONLY one JSON object using double quotes.\n"
+            "No extra text.\n"
+        )
+        user_prompt = (
+            f"Protagonist: {protagonist}\n"
+            "Input:\n\n" + text
+        )
+    
+        schema = {
+            "name": "focus_aspects_only",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "focus_aspects": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 6,
+                        "items": {"type": "string", "minLength": 1, "maxLength": 60}
+                    }
+                },
+                "required": ["focus_aspects"],
+                "additionalProperties": False
+            }
+        }
+    
+        base_cfg = self._readjson(CONFIG_PATH)
+        cfg = self._with_schema(base_cfg, schema)
+        raw = self.client.invoke(user_prompt, system_prompt, cfg)["content"].strip()
+        return json.loads(raw)
 
     @auto_wrap_error
-    def extract(self, text: str) -> dict:
+    def get_keypoints(self, text: str, protagonist: str, focus_aspects: list) -> dict:
         text = (text or "").strip()
-        if not text:
-            return {
-                "protagonist": "Unknown",
-                "category": "OTHER",
-                "keypoints": ["No clear keypoints can be extracted from the input."]
-            }
 
         system_prompt = (
             "You are a professional keypoint summarizer.\n"
             "\n"
-            "Your job:\n"
-            "1) Identify the MAIN SUBJECT (the 'protagonist') of the text.\n"
-            "2) Infer 2–6 'focus_aspects' that best summarize what matters for THIS topic.\n"
-            "3) Produce 5–8 keypoints that truly compress the content (not a sentence-by-sentence rewrite).\n"
+            "Task:\n"
+            "Generate keypoints that read like natural, well-formed sentences, as if they were brief lines in a news brief.\n"
+            "Each keypoint must be self-contained and readable on its own.\n"
             "\n"
-            "You MUST always output EXACTLY one JSON object using ONLY double quotes, matching this structure:\n"
-            "{\"protagonist\": \"<short subject>\", \"focus_aspects\": [\"...\"], \"keypoints\": [\"...\"]}\n"
+            "Output:\n"
+            "Return ONLY one JSON object using ONLY double quotes.\n"
+            "Format:\n"
+            "{\"keypoints\":[\"...\",\"...\"]}\n"
             "\n"
-            "Rules (strict):\n"
-            "1) Output ONLY the JSON. No extra text.\n"
-            "2) Use ONLY information explicitly stated in the input. Do NOT add outside knowledge.\n"
-            "3) Keep the original language of the input for protagonist, focus_aspects, and keypoints.\n"
-            "4) Keypoints must be short, information-dense sentences.\n"
-            "5) Do NOT list everything. Pick ONLY the most important points; deduplicate similar points.\n"
-            "6) Do NOT just reorder or lightly rephrase sentences; you MUST compress and generalize.\n"
+            "Hard rules:\n"
+            "1) Each keypoint MUST be a complete sentence (has a clear subject and verb). No fragments.\n"
+            "2) Each keypoint should add NEW information. Do not repeat the same idea in different words.\n"
+            "3) Do NOT rewrite sentence-by-sentence. You MUST compress and merge information.\n"
+            "4) Do NOT list everything; pick only the MOST important 5–8 points.\n"
+            "5) Keep the original language of the input.\n"
+            "6) Use ONLY information stated in the input; do NOT add outside knowledge.\n"
             "\n"
-            "How to infer focus_aspects (examples, NOT a fixed taxonomy):\n"
-            "- Weather forecasts often focus on: region(s), time window, rain/temperature/wind, alerts/risks, major changes.\n"
-            "- Incident/event reports often focus on: who, what happened, where/when, outcome/status, key actions/evidence, next steps.\n"
-            "- Game/product news often focus on: what it is, gameplay/mechanics, what's new/changed, differentiators, release/platform info.\n"
-            "For other topics, infer analogous aspects that capture what a reader should pay attention to.\n"
+            "Quality checklist (internal):\n"
+            "- After writing keypoints, remove any point that feels like a keyword list, a headline fragment, or a paraphrase of a single original sentence.\n"
+            "- Prefer 'who/what/when/where/outcome' structure for events; prefer 'location/time/change/impact' for weather.\n"
             "\n"
             "Fallback:\n"
             "If meaningful keypoints cannot be extracted, output:\n"
-            "{\"protagonist\": \"Unknown\", \"focus_aspects\": [\"Unclear\"], \"keypoints\": [\"No clear keypoints can be extracted from the input.\"]}\n"
+            "{\"keypoints\":[\"No clear keypoints can be extracted from the input.\"]}\n"
+        )
+        user_prompt = (
+            f"Protagonist: {protagonist}\n"
+            f"Focus aspects: {focus_aspects}\n"
+            "Input:\n\n" + text
         )
 
-        user_prompt = "Summarize the following text into the required JSON format.\n\n" + text
+        schema = {
+            "name": "keypoints_only",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "keypoints": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "items": {"type": "string", "minLength": 1, "maxLength": 260}
+                    }
+                },
+                "required": ["keypoints"],
+                "additionalProperties": False
+            }
+        }
+
+        base_cfg = self._readjson(CONFIG_PATH)
+        cfg = self._with_schema(base_cfg, schema)
+        raw = self.client.invoke(user_prompt, system_prompt, cfg)["content"].strip()
+        return json.loads(raw)
 
         current_config = self._readjson(CONFIG_PATH)
         response = self.client.invoke(user_prompt, system_prompt, current_config)

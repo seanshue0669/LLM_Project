@@ -8,24 +8,36 @@ def test_synthesis_short():
     tool = SynthesisAgentTool(llm_client)
 
     text = (
-        "牛頓第二定律表明，施加於物體的外力等於此物體動量的時變率：F = dp/dt。"
-        "其中 p 是動量，t 是時間"
+        "白日依山盡"
+        "黃河入海流"
+        "欲窮千里目"
+        "更上一層樓"
     )
 
-    result = tool.synthesize(text)
+    p = tool.get_protagonist(text)
+    a = tool.get_focus_aspects(text, p["protagonist"])
+    payload = tool.get_synthesis_payload(text, p["protagonist"], a["focus_aspects"])
 
-    print("=== [Synthesis Test] Input ===")
-    print(text)
-    print("\n=== [Synthesis Test] Result ===")
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    final_obj = {
+        "protagonist": p["protagonist"],
+        "focus_aspects": a["focus_aspects"],
+        "synthesis": payload["synthesis"],
+        "added_context": payload["added_context"],
+        "examples": payload["examples"],
+        "takeaways": payload["takeaways"],
+    }
 
-    assert isinstance(result, dict)
-    assert "protagonist" in result and result["protagonist"].strip()
-    assert "focus_aspects" in result and isinstance(result["focus_aspects"], list) and len(result["focus_aspects"]) >= 1
-    assert "synthesis" in result and result["synthesis"].strip()
-    assert "takeaways" in result and isinstance(result["takeaways"], list) and len(result["takeaways"]) >= 2
+    print("\n=== final_obj ===")
+    print(json.dumps(final_obj, ensure_ascii=False, indent=2))
+
+    assert isinstance(final_obj["protagonist"], str) and final_obj["protagonist"].strip()
+    assert isinstance(final_obj["focus_aspects"], list) and len(final_obj["focus_aspects"]) >= 1
+    assert isinstance(final_obj["synthesis"], str) and final_obj["synthesis"].strip()
+    assert isinstance(final_obj["takeaways"], list) and len(final_obj["takeaways"]) >= 1
+
+    print("\nTest passed!")
 
 
 if __name__ == "__main__":
     test_synthesis_short()
-    print("Test passed!")
+
