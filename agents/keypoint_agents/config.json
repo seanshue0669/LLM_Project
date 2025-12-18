@@ -1,8 +1,49 @@
 {
   "model": "gpt-5-nano",
-  "max_completion_tokens": 8000,
   "top_p": 1,
   "presence_penalty": 0,
   "frequency_penalty": 0,
-  "response_format": { "type": "text" }
+  "max_completion_tokens": 8000,
+  "response_format": {
+    "type": "json_schema",
+    "json_schema": {
+      "name": "keypoint_result",
+      "strict": true,
+      "schema": {
+        "type": "object",
+        "properties": {
+          "protagonist": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "focus_aspects": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 6,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60
+            }
+          },
+          "keypoints": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 260
+            }
+          }
+        },
+        "required": [ "protagonist", "focus_aspects", "keypoints" ],
+        "additionalProperties": false
+      }
+    }
+  }
 }
+
+
+
