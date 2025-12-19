@@ -9,5 +9,20 @@ __pycache__/
 # Sensitive file
 /config.py
 
+# Temp files
+/temp/
+*.pdf
+*.txt
+
+# Redis dump
+dump.rdb
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# ngrok
+ngrok.yml
+
 # else
 /target.txt
