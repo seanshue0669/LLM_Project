@@ -88,4 +88,62 @@ class FileExtractor:
         raise Exception("無法解析文字檔編碼")
     
     @staticmethod
-    def _extract_pd
+    def _extract_pdf(file_path: str) -> str:
+        """Extract text from .pdf file"""
+        text_parts = []
+        
+        with open(file_path, 'rb') as f:
+            pdf_reader = PyPDF2.PdfReader(f)
+            
+            if len(pdf_reader.pages) == 0:
+                raise Exception("PDF 檔案沒有內容")
+            
+            for page in pdf_reader.pages:
+                text = page.extract_text()
+                if text:
+                    text_parts.append(text)
+        
+        content = '\n'.join(text_parts).strip()
+        
+        if not content:
+            raise Exception("PDF 檔案無法提取文字（可能是圖片掃描檔）")
+        
+        return content
+    
+    @staticmethod
+    def _extract_docx(file_path: str) -> str:
+        """Extract text from .docx file"""
+        doc = Document(file_path)
+        
+        text_parts = []
+        for paragraph in doc.paragraphs:
+            text = paragraph.text.strip()
+            if text:
+                text_parts.append(text)
+        
+        content = '\n'.join(text_parts).strip()
+        
+        if not content:
+            raise Exception("Word 檔案沒有文字內容")
+        
+        return content
+    
+    @staticmethod
+    def _extract_pptx(file_path: str) -> str:
+        """Extract text from .pptx file"""
+        prs = Presentation(file_path)
+        
+        text_parts = []
+        for slide in prs.slides:
+            for shape in slide.shapes:
+                if hasattr(shape, "text"):
+                    text = shape.text.strip()
+                    if text:
+                        text_parts.append(text)
+        
+        content = '\n'.join(text_parts).strip()
+        
+        if not content:
+            raise Exception("PowerPoint 檔案沒有文字內容")
+        
+        return content

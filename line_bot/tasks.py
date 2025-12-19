@@ -2,8 +2,15 @@
 import os
 import json
 from celery import Celery
-from weasyprint import HTML
 from datetime import datetime, timedelta
+import markdown2
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.enums import TA_LEFT
 
 from config import REDIS_HOST, REDIS_PORT
 from __init__ import app as agent_app
@@ -16,8 +23,7 @@ from linebot.v3.messaging import (
     ApiClient,
     MessagingApi,
     PushMessageRequest,
-    TextMessage,
-    MessageAction
+    TextMessage
 )
 
 from linebot.v3.messaging import MessagingApiBlob
@@ -64,8 +70,9 @@ def process_content_task(self, user_id: str, content: str, access_token: str, fi
         # Step 3: Convert to PDF
         pdf_path = _generate_pdf(markdown_content, user_id)
         
-        # Step 4: Send PDF to user
-        _send_pdf(user_id, pdf_path, access_token)
+        # Step 4: Send result to user
+        success_msg = f"✅ 處理完成！\n\n檔案已生成：{os.path.basename(pdf_path)}\n\n📄 PDF 檔案位於：{pdf_path}"
+        _send_message(user_id, success_msg, access_token)
         
         # Step 5: Cleanup
         if file_path and os.path.exists(file_path):
@@ -79,7 +86,7 @@ def process_content_task(self, user_id: str, content: str, access_token: str, fi
 
 def _generate_pdf(markdown_content: str, user_id: str) -> str:
     """
-    Generate PDF from Markdown content
+    Generate PDF from Markdown content using ReportLab
     
     Args:
         markdown_content: Markdown text
@@ -88,99 +95,78 @@ def _generate_pdf(markdown_content: str, user_id: str) -> str:
     Returns:
         Path to generated PDF file
     """
-    # Convert Markdown to HTML with styling
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <style>
-            body {{
-                font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif;
-                line-height: 1.8;
-                padding: 40px;
-                max-width: 800px;
-                margin: 0 auto;
-            }}
-            h1 {{
-                color: #2c3e50;
-                border-bottom: 3px solid #3498db;
-                padding-bottom: 10px;
-            }}
-            h2 {{
-                color: #34495e;
-                margin-top: 30px;
-                border-bottom: 2px solid #ecf0f1;
-                padding-bottom: 8px;
-            }}
-            strong {{
-                color: #2980b9;
-            }}
-            ul, ol {{
-                margin-left: 20px;
-            }}
-            li {{
-                margin-bottom: 8px;
-            }}
-            code {{
-                background-color: #f4f4f4;
-                padding: 2px 6px;
-                border-radius: 3px;
-            }}
-        </style>
-    </head>
-    <body>
-        {_markdown_to_html(markdown_content)}
-    </body>
-    </html>
-    """
-    
-    # Generate PDF
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     pdf_filename = f"result_{user_id}_{timestamp}.pdf"
     pdf_path = os.path.join("temp", "outputs", pdf_filename)
     
-    HTML(string=html_content).write_pdf(pdf_path)
+    # Create PDF document
+    doc = SimpleDocTemplate(pdf_path, pagesize=A4)
+    story = []
+    
+    # Define styles
+    styles = getSampleStyleSheet()
+    
+    # Custom styles for Chinese text
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        textColor='#2c3e50',
+        spaceAfter=20,
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=14,
+        textColor='#34495e',
+        spaceAfter=12,
+    )
+    
+    body_style = ParagraphStyle(
+        'CustomBody',
+        parent=styles['BodyText'],
+        fontSize=11,
+        leading=18,
+        alignment=TA_LEFT,
+    )
+    
+    # Parse markdown and convert to PDF elements
+    lines = markdown_content.split('\n')
+    
+    for line in lines:
+        line = line.strip()
+        
+        if not line:
+            story.append(Spacer(1, 0.2*inch))
+            continue
+        
+        # Headers
+        if line.startswith('# '):
+            text = line[2:].strip()
+            story.append(Paragraph(text, title_style))
+        elif line.startswith('## '):
+            text = line[3:].strip()
+            story.append(Paragraph(text, heading_style))
+        # Bold text
+        elif line.startswith('**') and line.endswith('**'):
+            text = line[2:-2].strip()
+            story.append(Paragraph(f"<b>{text}</b>", body_style))
+        # List items
+        elif line.startswith('- ') or line.startswith('* '):
+            text = line[2:].strip()
+            story.append(Paragraph(f"• {text}", body_style))
+        # Numbered list
+        elif line[0].isdigit() and '. ' in line:
+            story.append(Paragraph(line, body_style))
+        # Normal text
+        else:
+            story.append(Paragraph(line, body_style))
+    
+    # Build PDF
+    doc.build(story)
     
     return pdf_path
-
-
-def _markdown_to_html(markdown_text: str) -> str:
-    """
-    Simple Markdown to HTML converter
-    
-    Args:
-        markdown_text: Markdown formatted text
-        
-    Returns:
-        HTML string
-    """
-    import re
-    
-    html = markdown_text
-    
-    # Headers
-    html = re.sub(r'^# (.+)$', r'<h1>\1</h1>', html, flags=re.MULTILINE)
-    html = re.sub(r'^## (.+)$', r'<h2>\1</h2>', html, flags=re.MULTILINE)
-    
-    # Bold
-    html = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', html)
-    
-    # Lists (unordered)
-    html = re.sub(r'^\- (.+)$', r'<li>\1</li>', html, flags=re.MULTILINE)
-    html = re.sub(r'(<li>.*</li>)', r'<ul>\1</ul>', html, flags=re.DOTALL)
-    
-    # Lists (ordered)
-    html = re.sub(r'^\d+\. (.+)$', r'<li>\1</li>', html, flags=re.MULTILINE)
-    
-    # Paragraphs
-    html = re.sub(r'\n\n', r'</p><p>', html)
-    html = '<p>' + html + '</p>'
-    
-    # Line breaks
-    html = html.replace('\n', '<br>')
-    
-    return html
 
 
 def _send_message(user_id: str, message: str, access_token: str):
@@ -195,16 +181,6 @@ def _send_message(user_id: str, message: str, access_token: str):
                 messages=[TextMessage(text=message)]
             )
         )
-
-
-def _send_pdf(user_id: str, pdf_path: str, access_token: str):
-    """Send PDF file to user"""
-    # Note: LINE Bot SDK v3 doesn't support direct file upload via API
-    # We need to host the file and send a download link
-    # For now, send a message with file path
-    
-    message = f"✅ 處理完成！\n\n檔案已生成：{os.path.basename(pdf_path)}\n\n⚠️ 注意：目前需要手動實作檔案傳送功能"
-    _send_message(user_id, message, access_token)
 
 
 def _schedule_cleanup(file_path: str, hours: int = 24):
