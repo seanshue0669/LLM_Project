@@ -29,8 +29,10 @@ configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
 # Temp directories
-TEMP_UPLOAD_DIR = 'temp/uploads'
-TEMP_OUTPUT_DIR = 'temp/outputs'
+# Get project root directory
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TEMP_UPLOAD_DIR = os.path.join(PROJECT_ROOT, 'temp', 'uploads')
+TEMP_OUTPUT_DIR = os.path.join(PROJECT_ROOT, 'temp', 'outputs')
 
 # Ensure directories exist
 os.makedirs(TEMP_UPLOAD_DIR, exist_ok=True)
@@ -170,7 +172,31 @@ def reply_user(reply_token: str, text: str):
             )
         )
 
-
+@app.route('/download/<filename>')
+def download_file(filename):
+    """Serve PDF file for download"""
+    from flask import send_file
+    import traceback
+    
+    try:
+        file_path = os.path.join(TEMP_OUTPUT_DIR, filename)
+        
+        print(f"Attempting to serve file: {file_path}")
+        print(f"File exists: {os.path.exists(file_path)}")
+        
+        if not os.path.exists(file_path):
+            return f"File not found: {filename}", 404
+        
+        return send_file(
+            file_path,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        error_trace = traceback.format_exc()
+        print(f"Error serving file: {error_trace}")
+        return f"Error: {str(e)}", 500
 if __name__ == "__main__":
     print("LINE Bot server starting...")
     print(f"Temp upload dir: {TEMP_UPLOAD_DIR}")

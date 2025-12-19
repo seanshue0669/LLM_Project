@@ -70,10 +70,12 @@ def process_content_task(self, user_id: str, content: str, access_token: str, fi
         # Step 3: Convert to PDF
         pdf_path = _generate_pdf(markdown_content, user_id)
         
-        # Step 4: Send result to user
-        success_msg = f"✅ 處理完成！\n\n檔案已生成：{os.path.basename(pdf_path)}\n\n📄 PDF 檔案位於：{pdf_path}"
+        # Step 4: Send download link to user
+        pdf_filename = os.path.basename(pdf_path)
+        # Get ngrok URL from environment or use default
+        download_url = f"https://unmorbidly-uncankered-addison.ngrok-free.dev/download/{pdf_filename}"
+        success_msg = f"✅ 處理完成！\n\n📥 點擊下載 PDF：\n{download_url}\n\n⏰ 連結 24 小時內有效"
         _send_message(user_id, success_msg, access_token)
-        
         # Step 5: Cleanup
         if file_path and os.path.exists(file_path):
             _schedule_cleanup(file_path)
