@@ -2,6 +2,22 @@
 本專案開發過程中使用 Claude (Anthropic) 作為技術諮詢和部分程式碼審查工具!!
 
 此專案是基於 LangGraph 的多代理系統框架,提供可重用的基礎架構以提供快速開發新的 agent。
+
+## 專案功能
+
+### 核心功能：文本摘要與分析
+- **自動意圖分類**：識別文本類型（KEYPOINT / SYNTHESIS）
+- **重點提取**：壓縮資訊，提取關鍵要點
+- **綜合分析**：深入解析，提供背景脈絡與應用建議
+
+### LINE Bot 整合
+- **多格式支援**：接受文字訊息和檔案上傳（.txt, .pdf, .docx, .pptx）
+- **非同步處理**：使用 Celery + Redis 避免 webhook timeout
+- **PDF 報告輸出**：自動生成格式化 PDF 並提供下載連結
+- **24小時自動清理**：暫存檔案定期清理節省空間
+
+---
+
 ## 專案結構與功能說明
 
 ### 核心模組
@@ -22,11 +38,39 @@
 - 整合各個 agent 的輸出成最終結果
 
 #### `agents/intent_agent/`
-意圖分類 agent,分析輸入文本的類型:
-- 使用 LLM 對輸入文本進行分類
-- 識別體裁類型(Narrative、Informational、Argumentative 等)
-- 識別語境類型
-- 提供分類結果給後續流程使用
+意圖分類 agent,分析輸入文本的類型
+
+#### `agents/keypoint_agents/`
+重點提取 agent,壓縮資訊並提取關鍵要點
+
+#### `agents/synthesis_agents/`
+綜合分析 agent,深入解析並提供應用建議
+
+### LINE Bot 模組
+
+#### `line_bot/bot.py`
+Flask webhook 伺服器,處理 LINE 訊息事件:
+- 接收文字訊息和檔案上傳
+- 檔案格式驗證與大小限制（5MB）
+- 非同步任務分發
+
+#### `line_bot/tasks.py`
+Celery 非同步任務處理:
+- Agent 處理流程執行
+- Markdown 轉 PDF 生成
+- 下載連結推送與檔案清理排程
+
+#### `line_bot/file_extractor.py`
+多格式檔案內容提取:
+- 支援 .txt, .pdf, .docx, .pptx
+- 自動編碼偵測
+- 錯誤處理與驗證
+
+#### `line_bot/formatter.py`
+結果格式化模組:
+- JSON 轉 Markdown
+- KEYPOINT 和 SYNTHESIS 模板
+- 中文排版優化
 
 ### 系統入口
 
@@ -37,7 +81,7 @@
 - 統一錯誤處理,回傳標準格式 `{"success": bool, "data": dict, "error": str}`
 
 #### `main.py`
-簡單的使用範例。從檔案讀取測試文本,調用 API 處理,並輸出結果。
+Agent 系統測試入口，從檔案讀取測試文本並輸出結果
 
 ### 配置檔案
 
@@ -45,12 +89,32 @@
 系統配置檔案:
 - OpenAI API 金鑰
 - LLM 模型參數(model、top_p、temperature 等)
-- 回應格式設定
+- LINE Bot 設定（Channel Access Token, Channel Secret）
+- Redis 連線設定
 
-**注意**: `config.py` 包含敏感資訊已加入 `.gitignore`。請複製 `config.example` 改名為 `config.py`,再填入你的 API 金鑰。
+**注意**: `config.py` 包含敏感資訊已加入 `.gitignore`。請複製 `config.example` 改名為 `config.py`,再填入以下資訊:
+```python
+# OpenAI Configuration
+OPENAI_APIKEY = "your-openai-api-key"
 
-#### `agents/intent_agent/config.json`
-Intent Agent 專用的 LLM 配置,定義 JSON Schema 強制輸出格式,確保分類結果符合預期結構。
+DEFLAUT_CONFIG = {
+    "model": "gpt-5.1",
+    "top_p": 1,
+    "presence_penalty": 0,
+    "frequency_penalty": 0,
+    "response_format": {"type": "text"}
+}
+
+# LINE Bot Configuration
+LINE_CHANNEL_ACCESS_TOKEN = "your-line-channel-access-token"
+LINE_CHANNEL_SECRET = "your-line-channel-secret"
+
+# Redis Configuration
+REDIS_HOST = "localhost"
+REDIS_PORT = 6379
+```
+
+---
 
 ## 核心特色
 
@@ -87,236 +151,181 @@ Final Error: API request failed
 - LLMClient 由頂層傳遞給所有需要的代理
 - 便於測試與模組替換
 
+---
+
 ## 快速開始
 
 ### 環境需求
-- Python 3.10.18
-- Windows
+- Python 3.10+
+- Windows / Linux / macOS
+- Redis Server
+- ngrok（LINE Bot 功能需要）
 
 ### 安裝步驟
 
-1. **克隆專案**
-   ```bash
-   git clone <repository-url>
-   cd <project-folder>
-   ```
+#### 1. 克隆專案
+```bash
+git clone <repository-url>
+cd <project-folder>
+```
 
-2. **建立虛擬環境** (建議)
-   ```bash
-   python -m venv venv
-   venv\Scripts\activate
-   ```
+#### 2. 建立虛擬環境（建議使用 conda）
+```bash
+conda create -n llm_env python=3.10
+conda activate llm_env
+```
 
-3. **安裝依賴套件**
-   ```bash
-   pip install -r requirements.txt
-   ```
+#### 3. 安裝依賴套件
+```bash
+pip install -r requirements.txt
+```
 
-4. **配置 API 金鑰**
-   ```bash
-   # 複製範例配置檔
-   cp config.example config.py
-   
-   # 編輯 config.py,填入你的 OpenAI API Key
-   # OPENAI_APIKEY = "your-api-key-here"
-   ```
+#### 4. 配置系統
+```bash
+# 複製範例配置檔
+cp config.example config.py
 
-5. **執行測試**
-   ```bash
-   python main.py
-   ```
+# 編輯 config.py，填入必要資訊：
+# - OPENAI_APIKEY
+# - LINE_CHANNEL_ACCESS_TOKEN（如需使用 LINE Bot）
+# - LINE_CHANNEL_SECRET（如需使用 LINE Bot）
+```
 
-### 基本使用範例
+#### 5. 測試 Agent 系統
+```bash
+python main.py
+```
 
+### LINE Bot 部署
+
+完整部署指南請參考：[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+
+**快速啟動（Windows）：**
+```bash
+# 雙擊執行啟動腳本
+start.bat
+```
+
+**手動啟動：**
+```bash
+# 終端 1: Redis
+cd C:\Tools\Redis-x64-5.0.14.1
+redis-server.exe
+
+# 終端 2: Celery Worker
+celery -A line_bot.tasks worker --loglevel=info --pool=solo
+
+# 終端 3: Flask Bot
+python -m line_bot.bot
+
+# 終端 4: ngrok
+ngrok http 5000
+```
+
+---
+
+## 基本使用
+
+### Agent 系統測試
 ```python
 from __init__ import app
 
 # 處理單一文本
-result = app.process("這是一段測試文本")
+result = app.process("牛頓第二定律表明，施加於物體的外力等於此物體動量的時變率：F = dp/dt。")
 
 if result["success"]:
     print("處理成功!")
-    print(f"分類結果: {result['data']}")
+    print(f"任務類型: {result['data']['selected_task_type']}")
+    print(f"結果: {result['data']['final_result_text']}")
 else:
     print("處理失敗!")
     print(f"錯誤訊息:\n{result['error']}")
 ```
 
-### 測試 Intent Agent
+### LINE Bot 使用
 
-```bash
-python agents/intent_agent/test_tool.py
-```
+1. 掃描 QR Code 加 Bot 為好友
+2. 傳送文字或上傳檔案（.txt, .pdf, .docx, .pptx）
+3. Bot 自動處理並回傳 PDF 下載連結
+4. 點擊連結下載報告（連結 24 小時有效）
+
+---
 
 ## 如何擴展新 Agent
 
-### 步驟 1: 建立資料夾結構
-在 `agents/` 下建立新的 agent 資料夾:
-```
-agents/
-└── your_new_agent/
-    ├── __init__.py
-    ├── schema.py        # 定義狀態和節點
-    ├── controller.py    # 實作業務邏輯
-    ├── tool.py          # (選用) 外部工具封裝
-    └── config.json      # (選用) Agent 專用配置
-```
-
-### 步驟 2: 定義 Schema
-在 `schema.py` 中定義你的 agent 狀態和節點:
-
-```python
-from typing import TypedDict
-from agents.mycore.base_schema import BaseSchema
-
-class YourAgentState(TypedDict):
-    input_field: str
-    output_field: str
-
-def process_node(state: YourAgentState) -> dict:
-    """佔位節點,實際邏輯在 controller 實作"""
-    return state
-
-class YourAgentSchema(BaseSchema):
-    state_type = YourAgentState
-    
-    # 定義狀態映射(給父圖用)
-    state_mapping = {
-        "scenario_name": {
-            "input": {
-                "parent_field": "agent_field"
-            },
-            "output": {
-                "agent_field": "parent_field"
-            }
-        }
-    }
-    
-    nodes = [
-        ("process_node", process_node),
-    ]
-    
-    direct_edges = []
-    conditional_edges = []
-```
-
-### 步驟 3: 實作 Controller
-在 `controller.py` 中實作實際邏輯:
-
-```python
-from agents.mycore.base_graph import BaseGraph
-from agents.mycore.LLMclient import LLMClient
-from .schema import YourAgentSchema
-
-class YourAgent(BaseGraph):
-    def __init__(self, llm_client: LLMClient):
-        super().__init__(YourAgentSchema.state_type)
-        
-        self.nodes = YourAgentSchema.nodes
-        self.conditional_edges = YourAgentSchema.conditional_edges
-        self.direct_edges = YourAgentSchema.direct_edges
-        
-        # 如果需要用到 LLM 或工具
-        self.llm_client = llm_client
-    
-    def process_node(self, state: dict) -> dict:
-        """實作實際業務邏輯"""
-        # 你的處理邏輯
-        result = self.llm_client.invoke(...)
-        state["output_field"] = result["content"]
-        return state
-    
-    def compile(self):
-        return super().compile()
-```
-
-### 步驟 4: 整合到 TopController
-在 `agents/top_controller/controller.py` 中註冊你的新 agent:
-
-```python
-# 1. Import 你的 controller 和 schema
-from agents.your_new_agent.controller import YourAgent
-from agents.your_new_agent.schema import YourAgentSchema
-
-# 2. 在 __init__ 加入 DEPENDENT_GRAPHS_AND_SCHEMA
-DEPENDENT_GRAPHS_AND_SCHEMA = {
-    "intent_agent": {...},
-    "your_new_agent": {
-        "controller": YourAgent,
-        "schema": YourAgentSchema
-    }
-}
-
-# 3. 新增調用方法
-def call_your_agent(self, state: dict) -> dict:
-    scenario = "scenario_name"
-    graphmapping = self.subgraph_mappings["your_new_agent"]
-    mapping = graphmapping.get(scenario)
-    
-    subgraph_input = self._map_input_state(state, mapping["input"])
-    result_state = self.subgraphs["your_new_agent"].invoke(subgraph_input)
-    parent_update = self._map_output_state(result_state, mapping["output"])
-    
-    return parent_update
-```
-
-### 步驟 5: 更新 TopController Schema
-在 `agents/top_controller/schema.py` 中:
-
-```python
-# 1. 在 TopControllerState 加入新欄位
-class TopControllerState(TypedDict):
-    input_text: str
-    selected_context_type: str
-    selected_genre_type: str
-    your_new_field: str  # 新增
-
-# 2. 定義節點函式
-def call_your_agent(state: TopControllerState) -> dict:
-    return state
-
-# 3. 註冊節點和邊緣
-class TopControllerSchema(BaseSchema):
-    nodes = [
-        ("call_intent_agent", call_intent_agent),
-        ("call_your_agent", call_your_agent),  # 新增
-        ("passthrough", passthrough),
-    ]
-    
-    # 根據需求加入 conditional_edges 或 direct_edges
-```
+詳細步驟請參考原文檔中的「如何擴展新 Agent」章節。
 
 ### 關鍵設計原則
 
 1. **Schema 只定義結構,Controller 實作邏輯**
-   - Schema: 聲明式的狀態、節點、邊緣定義
-   - Controller: 命令式的業務邏輯實作
-
 2. **子圖只操作自己的狀態**
-   - 透過 `state_mapping` 定義與父圖的介面
-   - 避免直接修改父圖的狀態欄位
-
 3. **使用依賴注入**
-   - 需要的資源(如 LLMClient)從上層傳入
-   - 避免在 controller 內部直接 import 或建立實例
-
 4. **錯誤會自動追蹤**
-   - BaseGraph 的 `_wrap_node` 會自動包裝錯誤
-   - 工具類別使用 `@auto_wrap_error` 裝飾器
 
-### 測試 Intent Agent
+---
 
-```bash
-python agents/intent_agent/test_tool.py
-```
+## 專案文件
+
+- **[DEPLOYMENT.md](docs/DEPLOYMENT.md)** - LINE Bot 完整部署指南
+- **[TODO.md](TODO.md)** - 開發進度與待辦事項
+
+---
+
+## 故障排除
+
+### Agent 系統
+
+**Q: API 請求失敗？**
+A: 檢查 `config.py` 中的 OPENAI_APIKEY 是否正確
+
+**Q: 錯誤訊息看不懂？**
+A: 系統會自動格式化錯誤路徑，從上到下追蹤問題來源
+
+### LINE Bot
+
+**Q: Celery 無法連接 Redis？**
+A: 確認 Redis server 正在運行，看到 "Ready to accept connections"
+
+**Q: Bot 沒有回應？**
+A: 檢查 LINE Webhook URL 是否正確設定，且「Use webhook」已開啟
+
+**Q: PDF 沒有中文？**
+A: 確認系統有微軟正黑體字型（msjh.ttc）
+
+**Q: 下載連結失效？**
+A: ngrok 免費版每次重啟 URL 會改變，需更新 LINE Webhook 和 `tasks.py` 中的 download_url
 
 ---
 
 ## 協作方式
 
-(待補充)
+### 給組員的快速上手指南
+
+1. 克隆專案並安裝依賴
+2. 閱讀 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+3. 設定 `config.py`（向團隊索取 API Keys）
+4. 執行 `start.bat` 啟動所有服務
+5. 測試 Agent 和 LINE Bot 功能
+
+### 開發規範
+
+- **Commit 格式**：`feat/fix/docs/chore: description`
+- **新增 Agent**：遵循「如何擴展新 Agent」的步驟
+- **測試**：每個 Agent 都應有對應的 `test_tool.py`
 
 ---
 
-**開發者**: Wallace
-**最後更新**: 2025-11-27
+## 技術棧
+
+- **LangGraph** - 多代理系統框架
+- **OpenAI API** - LLM 推理引擎
+- **Flask** - Web 框架
+- **Celery + Redis** - 非同步任務處理
+- **ReportLab** - PDF 生成
+- **LINE Messaging API** - 聊天機器人介面
+- **ngrok** - 本地開發公開 URL
+
+---
+
+**開發者**: Wallace  
+**最後更新**: 2025-12-19
