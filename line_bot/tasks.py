@@ -99,17 +99,39 @@ def _generate_pdf(markdown_content: str, user_id: str) -> str:
     pdf_filename = f"result_{user_id}_{timestamp}.pdf"
     pdf_path = os.path.join("temp", "outputs", pdf_filename)
     
+    # Register Chinese font
+    try:
+        # Try to register Microsoft JhengHei (微軟正黑體)
+        font_paths = [
+            'C:/Windows/Fonts/msjh.ttc',  # Windows 10/11
+            'C:/Windows/Fonts/msjh.ttf',  # Older Windows
+        ]
+        
+        font_registered = False
+        for font_path in font_paths:
+            if os.path.exists(font_path):
+                pdfmetrics.registerFont(TTFont('MSJHFont', font_path))
+                font_registered = True
+                break
+        
+        if not font_registered:
+            raise Exception("Microsoft JhengHei font not found")
+            
+    except Exception as e:
+        raise Exception(f"Failed to register Chinese font: {str(e)}")
+    
     # Create PDF document
     doc = SimpleDocTemplate(pdf_path, pagesize=A4)
     story = []
     
-    # Define styles
+    # Define styles with Chinese font
     styles = getSampleStyleSheet()
     
     # Custom styles for Chinese text
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
+        fontName='MSJHFont',
         fontSize=18,
         textColor='#2c3e50',
         spaceAfter=20,
@@ -118,6 +140,7 @@ def _generate_pdf(markdown_content: str, user_id: str) -> str:
     heading_style = ParagraphStyle(
         'CustomHeading',
         parent=styles['Heading2'],
+        fontName='MSJHFont',
         fontSize=14,
         textColor='#34495e',
         spaceAfter=12,
@@ -126,6 +149,7 @@ def _generate_pdf(markdown_content: str, user_id: str) -> str:
     body_style = ParagraphStyle(
         'CustomBody',
         parent=styles['BodyText'],
+        fontName='MSJHFont',
         fontSize=11,
         leading=18,
         alignment=TA_LEFT,
@@ -167,7 +191,6 @@ def _generate_pdf(markdown_content: str, user_id: str) -> str:
     doc.build(story)
     
     return pdf_path
-
 
 def _send_message(user_id: str, message: str, access_token: str):
     """Send text message to user"""
